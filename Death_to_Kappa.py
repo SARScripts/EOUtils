@@ -1,4 +1,4 @@
-def ctab(a, b):
+def ctab(a, b, aggregate = False):
     """
     Generate a Confusion-Matrix based on classified and reference image
 
@@ -13,6 +13,19 @@ def ctab(a, b):
     #print(np.version.version)
     a = a.flatten().astype(int)
     b = b.flatten().astype(int)
+    
+    if aggregate:
+        b[(b > 220) & (b < 230)] = 220
+        b[(b == 321)] = 333
+        b[(b == 324)] = 310
+
+        a[(a > 220) & (a < 230)] = 220
+        a[(a == 321)] = 333
+        a[(a == 324)] = 310
+        
+    
+    #a = [np.nan if x == 0 else x for x in a]
+    #b = [np.nan if x == 0 else x for x in b]
     
     name = np.union1d(a, b)
     
@@ -48,7 +61,7 @@ def ctab(a, b):
     
     return result
 
-def kstat(classified, reference, perCategory = False):
+def kstat(classified, reference, perCategory = False, aggregate = False, mask_array = []):
     """
     Calculate Statistics based on Confusion Matrix. 
     Indizes for Accuracy and Validation of Image Classifications taken from:
@@ -116,16 +129,19 @@ def kstat(classified, reference, perCategory = False):
     
     a = ds_cl.GetRasterBand(1).ReadAsArray()
     b = ds_ref.GetRasterBand(1).ReadAsArray()
+
+    if mask_array != []:
+        a = np.multiply(a, mask_array)
+        b = np.multiply(b, mask_array)
     
     if 0 in np.unique(b):
         b_nonzero = np.nonzero(b)
         b = b[b_nonzero]
         a = a[b_nonzero]
     ###########################################################################
-    
     # generate confusion matrix
-    ct = ctab(a,b)
-    ct2 = ctab(a,b)
+    ct = ctab(a,b,aggregate)
+    ct2 = ctab(a,b,aggregate)
     #reclass to calculate kappa per category
     result = [] 
     cttmp = ct
